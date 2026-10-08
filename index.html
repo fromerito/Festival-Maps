@@ -139,7 +139,7 @@ footer a{color:inherit}
       <p class="status" id="status"></p>
     </section>
 
-    <footer>Mapa, límites municipales y localidades © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a>.</footer>
+    <footer>Mapa, límites municipales y localidades © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a>. Estilo del mapa © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>.</footer>
   </aside>
 </div>
 
@@ -149,7 +149,11 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
 (() => {
   const CENTER = { lat: 10.4365828, lon: -66.9402082, name: "Estadio Monumental" };
   const R_EARTH = 6371.0088, MAX_R = 28;
-  const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+  // CARTO keys are restricted by Referer host: production only works on fromerito.github.io, dev only on localhost.
+  const CARTO_KEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+    ? "cb1_4el9_2_ae75455c37f8a89a60f246ae"
+    : "cb1_4el9_1_f3582f72985ffd79f89c4235";
+  const TILE_URL = "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=" + CARTO_KEY;
   const rad = d => d * Math.PI / 180;
   const haversine = (a, b) => {
     const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
@@ -369,8 +373,8 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
   // --- Live map (Leaflet) ---
   const map = L.map("map", { zoomControl: false, minZoom: 9, maxZoom: 18, zoomSnap: 0.25 }).setView([CENTER.lat, CENTER.lon], 11);
   L.tileLayer(TILE_URL, {
-    maxZoom: 19,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>'
+    maxZoom: 19, subdomains: "abcd",
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'
   }).addTo(map);
   L.control.zoom({ position: "topright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(map);
   const FitCtl = L.Control.extend({
@@ -546,7 +550,7 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
     drawScene(c, (lat, lon) => ({ x: gx(lon) - x0, y: gy(lat) - y0 + band }), unit, { minor: true });
     c.restore();
     c.font = `500 ${11 * unit}px "Public Sans", system-ui, sans-serif`;
-    const at = "Mapa y límites © colaboradores de OpenStreetMap", aw = c.measureText(at).width;
+    const at = "Mapa y límites © colaboradores de OpenStreetMap · Estilo © CARTO", aw = c.measureText(at).width;
     c.fillStyle = "rgba(255,255,255,.85)"; c.fillRect(6 * unit, out.height - 22 * unit, aw + 12 * unit, 18 * unit);
     c.fillStyle = "#333"; c.fillText(at, 12 * unit, out.height - 9 * unit);
 
