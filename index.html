@@ -139,7 +139,7 @@ footer a{color:inherit}
       <p class="status" id="status"></p>
     </section>
 
-    <footer>Mapa base © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>. Límites municipales y localidades: OpenStreetMap.</footer>
+    <footer>Mapa, límites municipales y localidades © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a>.</footer>
   </aside>
 </div>
 
@@ -149,8 +149,7 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
 (() => {
   const CENTER = { lat: 10.4365828, lon: -66.9402082, name: "Estadio Monumental" };
   const R_EARTH = 6371.0088, MAX_R = 28;
-  const TILE_URL = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-  const ATTRIB = "© OpenStreetMap · © CARTO";
+  const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   const rad = d => d * Math.PI / 180;
   const haversine = (a, b) => {
     const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
@@ -370,8 +369,8 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
   // --- Live map (Leaflet) ---
   const map = L.map("map", { zoomControl: false, minZoom: 9, maxZoom: 18, zoomSnap: 0.25 }).setView([CENTER.lat, CENTER.lon], 11);
   L.tileLayer(TILE_URL, {
-    subdomains: "abcd", maxZoom: 19, detectRetina: false,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>'
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>'
   }).addTo(map);
   L.control.zoom({ position: "topright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(map);
   const FitCtl = L.Control.extend({
@@ -498,8 +497,8 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
     const ring = circleLL(st.r * 1.14);
     const minLat = Math.min(...ring.map(q => q.lat)), maxLat = Math.max(...ring.map(q => q.lat));
     const minLon = Math.min(...ring.map(q => q.lon)), maxLon = Math.max(...ring.map(q => q.lon));
-    const TS = 512, maxW = LITE ? 3000 : 5200;
-    let z = 17, gx, gy;
+    const TS = 256, maxW = 3600;
+    let z = 18, gx, gy;
     for (; z > 8; z--) {
       const ws = TS * Math.pow(2, z);
       gx = lon => (lon + 180) / 360 * ws;
@@ -520,18 +519,17 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
     for (let tx = Math.floor(x0 / TS); tx <= Math.floor((x0 + w) / TS); tx++)
       for (let ty = Math.floor(y0 / TS); ty <= Math.floor((y0 + h) / TS); ty++) jobs.push([tx, ty]);
     let done = 0, failed = 0;
-    const subs = "abcd";
     const queue = jobs.slice();
     const worker = async () => {
       while (queue.length) {
         const [tx, ty] = queue.shift();
-        const url = TILE_URL.replace("{s}", subs[(tx + ty) % 4]).replace("{z}", z).replace("{x}", tx).replace("{y}", ty).replace("{r}", "@2x");
+        const url = TILE_URL.replace("{z}", z).replace("{x}", tx).replace("{y}", ty);
         const im = await loadImg(url);
         if (im) c.drawImage(im, tx * TS - x0, ty * TS - y0 + band, TS, TS); else failed++;
         done++; onProgress && onProgress(done, jobs.length);
       }
     };
-    await Promise.all(Array.from({ length: 6 }, worker));
+    await Promise.all(Array.from({ length: 2 }, worker));
     c.fillStyle = "#ffffff"; c.fillRect(0, 0, out.width, band); c.fillRect(w, band, side, h);
 
     // header
@@ -548,7 +546,7 @@ const GEO={"munis":[{"name":"Tovar","pop":14161,"area":298.5,"pts":[[-67.1916,10
     drawScene(c, (lat, lon) => ({ x: gx(lon) - x0, y: gy(lat) - y0 + band }), unit, { minor: true });
     c.restore();
     c.font = `500 ${11 * unit}px "Public Sans", system-ui, sans-serif`;
-    const at = "Mapa © colaboradores de OpenStreetMap · © CARTO", aw = c.measureText(at).width;
+    const at = "Mapa y límites © colaboradores de OpenStreetMap", aw = c.measureText(at).width;
     c.fillStyle = "rgba(255,255,255,.85)"; c.fillRect(6 * unit, out.height - 22 * unit, aw + 12 * unit, 18 * unit);
     c.fillStyle = "#333"; c.fillText(at, 12 * unit, out.height - 9 * unit);
 
